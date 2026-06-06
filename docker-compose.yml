@@ -1,6 +1,11 @@
 services:
   hermes:
-    image: nousresearch/hermes-agent:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HERMES_BASE_IMAGE: ${HERMES_BASE_IMAGE:-nousresearch/hermes-agent:latest}
+    image: ${HERMES_IMAGE:-hermes-agent-custom:latest}
     container_name: hermes
     restart: unless-stopped
     command: gateway run

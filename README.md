@@ -12,16 +12,21 @@ Included tools:
 
 ## Build and run
 
-The existing `docker-compose.yml` uses the upstream image name. Build the
-custom image with that same local tag, then prevent Compose from pulling over
-it:
+Docker Compose builds the custom image directly from `Dockerfile`:
 
 ```bash
-docker build --pull -t nousresearch/hermes-agent:latest .
-docker compose up -d --force-recreate --pull never
+docker compose up -d --build
 ```
 
 Copy `.env_example` to `.env`, then replace all placeholder credentials before
 starting the service.
+
+The base and output image names can be overridden when needed:
+
+```bash
+HERMES_BASE_IMAGE=nousresearch/hermes-agent:latest \
+HERMES_IMAGE=hermes-agent-custom:latest \
+docker compose build
+```
 
 `texlive-full` adds several gigabytes to the resulting image.
