@@ -1,0 +1,4 @@
+cd /home/N8N/hermes
+docker run -it --rm \
+  -v "$(pwd)/data/hermes:/opt/data" \
+  nousresearch/hermes-agent setup

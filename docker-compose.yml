@@ -1,0 +1,55 @@
+services:
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
+    restart: unless-stopped
+    command: gateway run
+    volumes:
+      - ${HERMES_DATA_DIR:-./data/hermes}:/opt/data
+    shm_size: 1g
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_TUI=1
+      - API_SERVER_ENABLED=true
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_KEY=${API_SERVER_KEY}
+      - API_SERVER_CORS_ORIGINS=https://openclaw.edutechnd.org,https://n8n.edutechnd.org
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+
+      # ===== Router 1: Gateway API (port 8642) =====
+      - "traefik.http.routers.hermes.rule=Host(`${SUBDOMAIN}.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.hermes.entrypoints=websecure"
+      - "traefik.http.routers.hermes.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.hermes.service=hermes"
+      - "traefik.http.routers.hermes.middlewares=hermes-headers,hermes-compress"
+      - "traefik.http.services.hermes.loadbalancer.server.port=8642"
+
+      # ===== Router 2: Dashboard (port 9119) — KHÔNG dùng compress vì làm hỏng WebSocket =====
+      - "traefik.http.routers.hermes-dash.rule=Host(`${DASHBOARD_SUBDOMAIN}.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.hermes-dash.entrypoints=websecure"
+      - "traefik.http.routers.hermes-dash.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.hermes-dash.service=hermes-dash"
+      - "traefik.http.routers.hermes-dash.middlewares=hermes-headers,hermes-dash-auth"
+      - "traefik.http.services.hermes-dash.loadbalancer.server.port=9119"
+      # Sticky session cho WebSocket
+      - "traefik.http.services.hermes-dash.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.hermes-dash.loadbalancer.sticky.cookie.name=hermes_dash_lb"
+
+      # ===== Middlewares =====
+      - "traefik.http.middlewares.hermes-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.hermes-compress.compress=true"
+      - "traefik.http.middlewares.hermes-dash-auth.basicauth.users=${DASHBOARD_AUTH}"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+
+networks:
+  traefik-net:
+    external: true

@@ -1,0 +1,12 @@
+# Hermes runtime data and credentials
+data/
+.env
+.env.*
+!.env_example
+
+# Local/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
